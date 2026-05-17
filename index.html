@@ -217,7 +217,6 @@ nav{display:flex;background:white;border-bottom:1px solid #e0ddd6;padding:0 32px
         <option value="baking">🥐 Выпечка</option>
         <option value="other">🍽 Другое</option>
       </select>
-      <button class="abtn" onclick="openAddRecipe()">+ Новый рецепт</button>
     </div>
     <div class="recipes-grid" id="recipes-grid"></div>
   </div>
@@ -410,19 +409,37 @@ const totalWeeks=4;
 const menuData={};
 let currentRecipeId=null;
 
+function getStorage(){
+  // try localStorage first, then sessionStorage
+  try{localStorage.setItem('_t','1');localStorage.removeItem('_t');return localStorage;}
+  catch(e){try{return sessionStorage;}catch(e2){return null;}}
+}
+
 function saveToStorage(){
+  const st=getStorage();if(!st)return;
   try{
-    localStorage.setItem('menu_recipes',JSON.stringify(RECIPES));
-    localStorage.setItem('menu_data',JSON.stringify(menuData));
-    localStorage.setItem('menu_nextid',String(nextId));
-  }catch(e){}
+    st.setItem('menu_recipes',JSON.stringify(RECIPES));
+    st.setItem('menu_data',JSON.stringify(menuData));
+    st.setItem('menu_nextid',String(nextId));
+    showSaved();
+  }catch(e){console.log('save error',e);}
+}
+
+function showSaved(){
+  let el=document.getElementById('save-toast');
+  if(!el){el=document.createElement('div');el.id='save-toast';
+    el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#3b6d11;color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-family:Nunito,sans-serif;z-index:9999;transition:opacity .5s';
+    document.body.appendChild(el);}
+  el.textContent='✅ Сохранено!';el.style.opacity='1';
+  setTimeout(()=>{el.style.opacity='0';},2000);
 }
 
 function loadFromStorage(){
+  const st=getStorage();if(!st)return null;
   try{
-    const sr=localStorage.getItem('menu_recipes');
-    const sm=localStorage.getItem('menu_data');
-    const sn=localStorage.getItem('menu_nextid');
+    const sr=st.getItem('menu_recipes');
+    const sm=st.getItem('menu_data');
+    const sn=st.getItem('menu_nextid');
     if(sr){const r=JSON.parse(sr);RECIPES.length=0;r.forEach(x=>RECIPES.push(x));}
     if(sn){nextId=parseInt(sn)||200;}
     return sm?JSON.parse(sm):null;
@@ -498,8 +515,6 @@ function renderRecipes(list){
         <div class="rc-desc">${r.desc}</div>
         <div class="card-btns">
           <button class="cbtn" onclick="event.stopPropagation();openView(${r.id})">📖 Открыть</button>
-          <button class="cbtn" onclick="event.stopPropagation();openEdit(${r.id})">✏️ Изменить</button>
-          <button class="cbtn d" onclick="event.stopPropagation();delRecipe(${r.id})">🗑</button>
         </div>
       </div>
     </div>`).join('');
@@ -525,8 +540,7 @@ function openView(id){
     <div class="hint">💡 Нажмите «Редактировать» чтобы изменить любой текст, добавить или удалить шаги и ингредиенты</div>
   `;
   document.getElementById('modal-footer').innerHTML=`
-    <button class="cancbtn" onclick="closeModal()">Закрыть</button>
-    <button class="sbtn" onclick="openEdit(${id})">✏️ Редактировать</button>
+    <button class="sbtn" onclick="closeModal()">Закрыть</button>
   `;
   document.getElementById('modal').classList.add('open');
 }
