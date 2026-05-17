@@ -123,10 +123,49 @@ nav{display:flex;background:white;border-bottom:1px solid #e0ddd6;padding:0 32px
 .asbtn{padding:7px 12px;background:#3b6d11;color:white;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600}
 
 @media(max-width:600px){
-  header{padding:14px 16px}
-  .container{padding:14px}
-  nav{padding:0 12px}
+  header{padding:12px 14px;gap:8px}
+  header h1{font-size:20px}
+  .hbtn{display:none}
+  nav{padding:0 8px}
+  .nav-tab{padding:12px 14px;font-size:13px}
+  .container{padding:12px 10px}
+  .week-header{margin-bottom:14px}
+  .week-title{font-size:18px}
+  .wbtn{padding:9px 14px;font-size:13px}
+  .day-grid{grid-template-columns:1fr;gap:10px}
+  .day-name{font-size:13px;padding:10px 14px}
+  .meal-label{font-size:11px}
+  .meal-select{font-size:14px;padding:9px 10px}
+  .shop-bar{flex-direction:column;align-items:stretch;text-align:center}
+  .shop-bar p{font-size:13px}
+  .gbtn{width:100%;padding:12px}
+  .toolbar{flex-direction:column;gap:8px}
+  .srch{min-width:unset;width:100%;font-size:15px;padding:12px 14px}
+  .fsel{width:100%;font-size:14px;padding:12px}
+  .abtn{width:100%;padding:12px;font-size:14px}
+  .recipes-grid{grid-template-columns:1fr;gap:14px}
+  .rc-emoji{font-size:40px;padding:18px}
+  .rc-name{font-size:15px}
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal{border-radius:20px 20px 0 0;max-height:92vh}
+  .mhdr{border-radius:20px 20px 0 0;padding:16px 18px}
+  .mtitle{font-size:17px}
+  .mbody{padding:16px}
+  .mfooter{padding:12px 16px;gap:8px}
+  .sbtn,.cancbtn{flex:1;padding:12px;font-size:14px;text-align:center}
   .egrid{grid-template-columns:1fr}
+  .egrid.full{grid-template-columns:1fr}
+  .efield{font-size:15px;padding:11px 12px}
+  .eli input,.eli textarea{font-size:15px}
+  .addrow input,.addrow textarea{font-size:14px}
+  .ardbtn{padding:10px 14px;font-size:13px}
+  .asin{font-size:14px;padding:9px 10px}
+  .asbtn{font-size:13px;padding:9px 12px}
+  .sitem{padding:9px 0}
+  .sitem input[type=checkbox]{width:18px;height:18px}
+  .cbtn{padding:8px 14px;font-size:12px}
+  .stitle{font-size:15px}
+  .ilist li,.slist li{font-size:14px}
 }
 </style>
 </head>
@@ -371,21 +410,49 @@ const totalWeeks=4;
 const menuData={};
 let currentRecipeId=null;
 
+function saveToStorage(){
+  try{
+    localStorage.setItem('menu_recipes',JSON.stringify(RECIPES));
+    localStorage.setItem('menu_data',JSON.stringify(menuData));
+    localStorage.setItem('menu_nextid',String(nextId));
+  }catch(e){}
+}
+
+function loadFromStorage(){
+  try{
+    const sr=localStorage.getItem('menu_recipes');
+    const sm=localStorage.getItem('menu_data');
+    const sn=localStorage.getItem('menu_nextid');
+    if(sr){const r=JSON.parse(sr);RECIPES.length=0;r.forEach(x=>RECIPES.push(x));}
+    if(sn){nextId=parseInt(sn)||200;}
+    return sm?JSON.parse(sm):null;
+  }catch(e){return null;}
+}
+
 function initMenuData(){
   for(let w=1;w<=totalWeeks;w++){
     menuData[w]={};
     DAYS.forEach(d=>{menuData[w][d]={breakfast:'',lunch:'',dinner:''};});
   }
-  const sug=[
-    ['Овсяная каша','Борщ','Курица в сметане/сливках'],
-    ['Омлет с сыром','Норвежский суп','Паста с курицей и грибами'],
-    ['Сырники','Суп с фрикадельками','Плов'],
-    ['Тосты с авокадо','Гречневый суп','Гуляш'],
-    ['Яичница с овощами','Жульен','Карбонара'],
-    ['Вафли','Окрошка','Тортилья-бургер'],
-    ['Каша гречневая','','Блины с курицей и грибами'],
-  ];
-  DAYS.forEach((d,i)=>{menuData[1][d]={breakfast:sug[i][0],lunch:sug[i][1],dinner:sug[i][2]};});
+  const saved=loadFromStorage();
+  if(saved){
+    Object.keys(saved).forEach(w=>{
+      if(menuData[w])Object.keys(saved[w]).forEach(d=>{
+        if(menuData[w][d])Object.assign(menuData[w][d],saved[w][d]);
+      });
+    });
+  } else {
+    const sug=[
+      ['Овсяная каша','Борщ','Курица в сметане/сливках'],
+      ['Омлет с сыром','Норвежский суп','Паста с курицей и грибами'],
+      ['Сырники','Суп с фрикадельками','Плов'],
+      ['Тосты с авокадо','Гречневый суп','Гуляш'],
+      ['Яичница с овощами','Жульен','Карбонара'],
+      ['Вафли','Окрошка','Тортилья-бургер'],
+      ['Каша гречневая','','Блины с курицей и грибами'],
+    ];
+    DAYS.forEach((d,i)=>{menuData[1][d]={breakfast:sug[i][0],lunch:sug[i][1],dinner:sug[i][2]};});
+  }
 }
 
 function buildOptions(sel=''){
@@ -417,7 +484,7 @@ function renderMenu(){
   }).join('');
 }
 
-function setMeal(day,slot,val){menuData[currentWeek][day][slot]=val;}
+function setMeal(day,slot,val){menuData[currentWeek][day][slot]=val;saveToStorage();}
 function changeWeek(dir){currentWeek=Math.max(1,Math.min(totalWeeks,currentWeek+dir));renderMenu();}
 function catLabel(c){return{breakfast:'Завтрак',soup:'Суп',meat:'Мясо',salad:'Салат',baking:'Выпечка',pasta:'Паста/Крупы',other:'Другое'}[c]||c;}
 
@@ -444,7 +511,6 @@ function filterRecipes(){
   renderRecipes(RECIPES.filter(r=>(!q||r.name.toLowerCase().includes(q)||r.desc.toLowerCase().includes(q))&&(!cat||r.cat===cat)));
 }
 
-// VIEW
 function openView(id){
   const r=RECIPES.find(x=>x.id===id);if(!r)return;
   currentRecipeId=id;
@@ -465,7 +531,6 @@ function openView(id){
   document.getElementById('modal').classList.add('open');
 }
 
-// EDIT
 function openEdit(id){
   const r=RECIPES.find(x=>x.id===id);if(!r)return;
   currentRecipeId=id;
@@ -474,7 +539,6 @@ function openEdit(id){
   document.getElementById('modal').classList.add('open');
 }
 
-// ADD
 function openAddRecipe(){
   currentRecipeId=null;
   document.getElementById('modal-title').textContent='➕ Новый рецепт';
@@ -580,6 +644,7 @@ function saveRecipe(id){
     RECIPES.push({id:newId,name,emoji,cat,desc,ingredients:ings,steps});
     id=newId;
   }
+  saveToStorage();
   filterRecipes();
   renderMenu();
   openView(Number(id));
@@ -589,6 +654,7 @@ function delRecipe(id){
   if(!confirm('Удалить этот рецепт?'))return;
   const idx=RECIPES.findIndex(x=>x.id===id);
   if(idx!==-1)RECIPES.splice(idx,1);
+  saveToStorage();
   filterRecipes();renderMenu();
 }
 
